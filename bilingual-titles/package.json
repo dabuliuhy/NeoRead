@@ -1,0 +1,13 @@
+{
+  "name": "zotero-bilingual-titles",
+  "version": "1.0.0",
+  "private": true,
+  "description": "English and translated titles in one two-line Zotero column",
+  "license": "MIT",
+  "scripts": {
+    "build": "node scripts/build.cjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

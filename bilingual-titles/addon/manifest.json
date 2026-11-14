@@ -1,0 +1,15 @@
+{
+  "manifest_version": 2,
+  "name": "双行标题 · Bilingual Titles",
+  "version": "1.0.0",
+  "description": "英文标题在上，中文译文在下；合并标题列，并优化作者、年份、评分及期刊标签的排列。",
+  "author": "Bilingual Titles contributors",
+  "applications": {
+    "zotero": {
+      "id": "bilingual-titles@local",
+      "update_url": "https://example.invalid/bilingual-titles/updates.json",
+      "strict_min_version": "10.0.8",
+      "strict_max_version": "10.0.*"
+    }
+  }
+}

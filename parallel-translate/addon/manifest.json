@@ -1,0 +1,19 @@
+{
+  "manifest_version": 2,
+  "name": "双语研读 · Parallel Translate",
+  "version": "1.0.0",
+  "description": "在 Zotero 标签页中阅读原文、译文或逐段对照，支持目录图表导航、原生注释、英文校订与局部重译。",
+  "author": "Parallel Translate contributors",
+  "icons": {
+    "48": "content/icons/icon48.png",
+    "96": "content/icons/icon96.png"
+  },
+  "applications": {
+    "zotero": {
+      "id": "parallel-translate@local",
+      "update_url": "https://example.invalid/parallel-translate/updates.json",
+      "strict_min_version": "10.0.8",
+      "strict_max_version": "10.0.*"
+    }
+  }
+}

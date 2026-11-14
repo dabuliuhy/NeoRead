@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <title>双语研读</title>
+  <link rel="stylesheet" href="workspace.css" />
+  <link rel="stylesheet" href="reading.css" />
+  <link rel="stylesheet" href="reader-tools.css" />
+  <link rel="stylesheet" href="vendor/katex/katex.min.css" />
+  <script src="icons.js" defer="defer"></script>
+  <script src="document.js" defer="defer"></script>
+  <script src="reader-selection.js" defer="defer"></script>
+  <script src="reader-model.js" defer="defer"></script>
+  <script src="vendor/katex/katex.min.js" defer="defer"></script>
+  <script src="math.js" defer="defer"></script>
+  <script src="api.js" defer="defer"></script>
+  <script src="native-link.js" defer="defer"></script>
+  <script src="asset-layout.js" defer="defer"></script>
+  <script src="pdf-layout.js" defer="defer"></script>
+  <script src="pdf-view.js" defer="defer"></script>
+  <script src="references.js" defer="defer"></script>
+  <script src="cite-view.js" defer="defer"></script>
+  <script src="reader-view.js" defer="defer"></script>
+  <script src="reader-tools.js" defer="defer"></script>
+  <script src="reader-interactions.js" defer="defer"></script>
+  <script src="reader-editor.js" defer="defer"></script>
+  <script src="settings-controls.js" defer="defer"></script>
+  <script src="workspace.js" defer="defer"></script>
+</head>
+<body>
+  <header class="topbar">
+    <span class="app-mark" aria-hidden="true"><img src="icons/icon.svg" alt="" width="24" height="24" /></span>
+    <h1 id="document-title">双语研读</h1>
+    <span id="progress-label" role="status" aria-live="polite"></span>
+    <button id="start" class="primary" hidden="hidden" data-icon="play" data-icon-text="">继续翻译</button>
+    <button id="pause" class="quiet" hidden="hidden" data-icon="pause" data-icon-text="">暂停</button>
+    <button id="cancel-parse" class="quiet" hidden="hidden" data-icon="stop" data-icon-text="">取消解析</button>
+    <button id="settings-toggle" class="icon-button" title="设置" aria-label="设置" data-icon="settings">⚙</button>
+    <button id="appearance-toggle" class="icon-button appearance-toggle" title="阅读外观" aria-label="阅读外观" aria-expanded="false" aria-controls="appearance-panel" data-icon="type">Aa</button>
+    <button id="close-native" class="icon-button" title="关闭译文栏" aria-label="关闭译文栏" hidden="hidden" data-icon="close">×</button>
+  </header>
+  <progress id="progress" max="1" value="0" aria-label="翻译进度"></progress>
+  <section id="appearance-panel" class="appearance-panel" aria-label="阅读外观" hidden="hidden">
+    <div class="appearance-heading"><strong>阅读外观</strong><button id="appearance-close" class="icon-button" aria-label="关闭阅读外观" data-icon="close">×</button></div>
+    <label>字体<select id="reading-font"><option value="serif">默认衬线</option><option value="georgia">Georgia</option><option value="cambria">Cambria</option><option value="times">Times New Roman</option><option value="sans">黑体</option><option value="kai">楷体</option></select></label>
+    <label>字号<span class="appearance-range"><button id="reading-smaller" type="button" class="icon-button" aria-label="减小字号" data-icon="minus">−</button><input id="reading-size" type="number" min="14" max="28" step="1" /><button id="reading-larger" type="button" class="icon-button" aria-label="增大字号" data-icon="plus">+</button><output id="reading-size-label" hidden="hidden">18</output></span></label>
+    <label>行距<select id="reading-leading"><option value="1.55">紧凑</option><option value="1.78">舒适</option><option value="2.05">宽松</option></select></label>
+    <label>行宽<select id="reading-width"><option value="45">窄</option><option value="80">标准</option><option value="120">宽</option></select></label>
+    <label>对齐<select id="reading-align"><option value="justify">两端对齐</option><option value="left">左对齐</option></select></label>
+    <label>PDF 缩略图<input id="reading-thumbnail" type="checkbox" checked="checked" /></label>
+    <button id="appearance-reset" class="quiet" data-icon="undo" data-icon-text="">恢复默认</button>
+  </section>
+  <p id="job-error" class="inline-error" hidden="hidden"></p>
+  <div id="empty" role="status"><span id="empty-message">正在打开论文…</span><button id="retry-open" class="quiet" hidden="hidden" data-icon="refresh" data-icon-text="">重试</button></div>
+  <main id="reader" hidden="hidden">
+    <div id="reading-panes" class="reading-panes">
+      <section class="reading-side pdf-side" aria-label="原始 PDF">
+        <div class="pane-heading">
+          <span>PDF</span>
+          <div class="toolbar-group"><button id="previous-page" class="icon-button" aria-label="上一页" data-icon="chevron-left">‹</button><select id="jump-page" aria-label="PDF 页码"></select><button id="next-page" class="icon-button" aria-label="下一页" data-icon="chevron-right">›</button><select id="pdf-zoom" aria-label="PDF 缩放"><option value="100">适应宽度</option><option value="125">125%</option><option value="150">150%</option><option value="200">200%</option></select><button id="reload-pdf" class="icon-button" title="重新加载 PDF" aria-label="重新加载 PDF" data-icon="refresh">↻</button></div>
+        </div>
+        <div id="pdf-pane" tabindex="0"><div id="pdf-pages"></div></div>
+      </section>
+      <div id="pane-divider" class="pane-divider" role="separator" aria-label="调整 PDF 与译文栏宽" aria-orientation="vertical" aria-valuemin="25" aria-valuemax="75" aria-valuenow="50" tabindex="0"></div>
+      <section class="reading-side translation-side" aria-label="全文译文">
+        <div class="pane-heading"><span id="target-label">译文</span><label class="checkbox"><input id="sync-scroll" type="checkbox" checked="checked"/> 同步滚动</label></div>
+        <div id="translation-pane" tabindex="0"><article id="rows" class="translation-document" aria-label="完整译文"></article></div>
+      </section>
+    </div>
+  </main>
+  <div id="notice" role="status" aria-live="polite" hidden="hidden"></div>
+  <section id="settings-panel" class="settings-panel" aria-labelledby="settings-title" hidden="hidden">
+    <form id="settings-form">
+      <div class="settings-heading"><div class="settings-title-wrap"><img class="settings-brand" src="icons/icon.svg" width="36" height="36" alt="" /><div><h2 id="settings-title">双语阅读<span>设置</span></h2></div></div><button type="button" id="settings-close" class="icon-button" aria-label="关闭设置" data-icon="close">×</button></div>
+      <nav class="settings-tabs" role="tablist" aria-label="设置类别">
+        <button type="button" id="settings-tab-connection" role="tab" aria-selected="true" aria-controls="connection-settings" data-settings-tab="connection" data-icon="connection" data-icon-text="">连接</button>
+        <button type="button" id="settings-tab-translation" role="tab" aria-selected="false" aria-controls="translation-settings" tabindex="-1" data-settings-tab="translation" data-icon="tag" data-icon-text="">翻译</button>
+        <button type="button" id="settings-tab-layout" role="tab" aria-selected="false" aria-controls="layout-settings" tabindex="-1" data-settings-tab="layout" data-icon="type" data-icon-text="">排版</button>
+        <button type="button" id="settings-tab-advanced" role="tab" aria-selected="false" aria-controls="advanced-settings" tabindex="-1" data-settings-tab="advanced" data-icon="sliders" data-icon-text="">高级</button>
+      </nav>
+      <section id="connection-settings" class="settings-group settings-card settings-tab-panel" role="tabpanel" aria-labelledby="settings-tab-connection" data-settings-panel="connection"><h3 class="settings-section-title">模型连接</h3>
+        <div class="settings-row"><label for="endpoint">Base URL</label><div class="field-with-action"><input id="endpoint" type="url" required="required" spellcheck="false" placeholder="https://api.example.com/v1" title="支持基础地址或完整接口地址" /><button id="fetch-models" type="button" class="quiet" data-icon="refresh" data-icon-text="" title="测试地址与密钥，读取可用模型">获取模型</button></div></div>
+        <div class="settings-row"><span id="api-format-label" class="setting-label">API 格式</span>
+          <div class="segmented" role="radiogroup" aria-labelledby="api-format-label">
+            <label class="protocol-choice"><input type="radio" name="api-format" value="openai-chat" checked="checked" /><span title="Chat Completions / 兼容接口">OpenAI</span></label>
+            <label class="protocol-choice"><input type="radio" name="api-format" value="openai-responses" /><span title="OpenAI Responses">Responses</span></label>
+            <label class="protocol-choice"><input type="radio" name="api-format" value="anthropic" /><span>Anthropic</span></label>
+          </div><input id="api-type" type="hidden" value="openai-chat" />
+        </div>
+        <div class="settings-row"><label for="api-key">API Key</label><div class="field-with-action"><input id="api-key" type="password" autocomplete="off" placeholder="API Key" aria-describedby="key-status" /><button id="save-key" type="button" class="quiet" data-icon="save" data-icon-text="" title="仅保存此接口的 API 密钥">保存</button></div></div>
+        <p id="key-status" class="field-note aligned-note" role="status"></p>
+        <div class="settings-row"><label for="model">模型名称</label><select id="model" required="required" aria-describedby="model-status" disabled="disabled"><option value="">请先获取模型</option></select></div>
+        <p id="model-status" class="field-note aligned-note" role="status"></p>
+        <div class="settings-row"><label for="reasoning-effort">推理强度</label><select id="reasoning-effort" aria-describedby="reasoning-hint"><option value="auto">默认（由模型决定）</option><option value="low">Low · 低</option><option value="medium">Medium · 中</option><option value="high">High · 高</option><option value="xhigh">Xhigh · 很高</option><option value="max">Max · 最高</option></select></div>
+        <p id="reasoning-hint" class="field-note aligned-note"></p>
+      </section>
+      <section id="translation-settings" class="settings-group settings-card reading-settings settings-tab-panel" role="tabpanel" aria-labelledby="settings-tab-translation" data-settings-panel="translation" hidden="hidden"><h3 class="settings-section-title">翻译与整理</h3>
+        <div class="settings-row multiline-row"><label for="instructions">翻译要求</label><textarea id="instructions" rows="3" maxlength="8000" placeholder="术语、语气或其他要求（可选）"></textarea></div>
+        <label class="switch-row" for="auto-tag"><span class="switch-copy"><strong>完成后自动加标签</strong></span><input id="auto-tag" type="checkbox" class="switch" checked="checked" /></label>
+        <div class="settings-row tag-row"><label for="tag-name">完成标签</label><div class="field-with-action"><div class="tag-input"><input id="tag-color" type="color" value="#f19837" aria-label="标签颜色" title="点击更换标签颜色" /><input id="tag-name" type="text" maxlength="100" spellcheck="false" value="/翻译" placeholder="/翻译" /></div><button id="tag-reset" type="button" class="quiet" data-icon="undo" title="恢复默认标签与颜色" aria-label="恢复默认标签与颜色">恢复默认</button></div></div>
+      </section>
+      <section id="layout-settings" class="settings-group settings-card settings-tab-panel" role="tabpanel" aria-labelledby="settings-tab-layout" data-settings-panel="layout" hidden="hidden"><h3 class="settings-section-title">阅读与排版</h3>
+        <label class="switch-row" for="formula-ai"><span class="switch-copy"><strong>AI 公式排版</strong></span><input id="formula-ai" title="使用模型识别复杂公式，会产生额外用量" type="checkbox" class="switch" checked="checked" /></label>
+        <div class="settings-group layout-settings" aria-label="AI 整体排版">
+        <label class="switch-row" for="layout-ai" title="使用模型复核可疑版面，会产生额外用量；失败时保留本地排版"><span class="switch-copy"><strong>AI 整体排版</strong></span><input id="layout-ai" type="checkbox" class="switch" /></label>
+        <div class="settings-row"><label for="layout-model">排版模型</label><select id="layout-model" aria-describedby="layout-hint"><option value="">跟随翻译模型</option></select></div>
+        <div class="settings-row"><label for="layout-effort">推理强度</label><select id="layout-effort"><option value="auto">默认（由模型决定）</option><option value="minimal">Minimal · 最低</option><option value="low">Low · 低</option><option value="medium">Medium · 中</option><option value="high">High · 高</option></select></div>
+        <p id="layout-hint" class="field-note aligned-note"></p>
+        </div>
+      </section>
+      <section id="advanced-settings" class="settings-group settings-card settings-tab-panel" role="tabpanel" aria-labelledby="settings-tab-advanced" data-settings-panel="advanced" hidden="hidden">
+        <h3 class="settings-section-title">高级设置</h3>
+        <div class="settings-group advanced-content">
+          <section class="settings-group settings-subgroup" aria-label="请求与安全"><h4>请求与安全</h4>
+          <div class="settings-row"><label for="auth-mode">鉴权方式</label><select id="auth-mode"><option value="auto">自动（按协议）</option><option value="bearer">Bearer Token</option><option value="x-api-key">x-api-key</option></select></div>
+          
+          <div class="settings-row"><label for="max-chars">片段上限</label><select id="max-chars"><option value="800">800 字符</option><option value="1800">1800 字符（默认）</option><option value="3000">3000 字符</option><option value="4000">4000 字符</option></select></div>
+          <div class="settings-row"><label for="concurrency">并发请求</label><select id="concurrency"><option value="1">1（最稳）</option><option value="2">2</option><option value="4" selected="selected">4（推荐）</option><option value="6">6</option><option value="8">8（最快，易触发限流）</option></select></div>
+          <div class="settings-row" id="output-limit-label" hidden="hidden"><label for="max-output-tokens">输出上限</label><div class="input-unit"><input id="max-output-tokens" aria-label="输出 token 上限" type="number" min="256" max="65536" step="1" value="8192" /><span aria-hidden="true">tokens</span></div></div>
+          <div class="settings-row"><span></span><label class="checkbox"><input id="clear-key" type="checkbox" /> 删除此地址已保存的密钥</label></div>
+          </section>
+          <section class="settings-group settings-subgroup" aria-label="本地数据"><h4>本地数据</h4>
+          <div class="cache-note"><span>译文缓存目录</span><code id="cache-location"></code>
+            <span>配置文件</span><code id="config-location"></code></div>
+          </section>
+        </div>
+      </section>
+      <div class="settings-actions settings-card"><p id="settings-message" role="status" class="settings-feedback"></p><div class="settings-action-buttons"><button id="test-api" type="button" class="quiet" data-icon="check" data-icon-text="" title="调用所选模型进行一次简短测试">测试模型</button><button id="save-settings" type="submit" class="primary" data-icon="save" data-icon-text="">保存并应用</button></div></div>
+    </form>
+  </section>
+</body>
+</html>

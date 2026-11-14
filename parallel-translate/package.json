@@ -1,0 +1,13 @@
+{
+  "name": "parallel-translate-zotero",
+  "version": "1.0.0",
+  "private": true,
+  "license": "MIT",
+  "description": "Independent bilingual document translation for Zotero 10.0.8",
+  "scripts": {
+    "build": "node scripts/build.cjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
